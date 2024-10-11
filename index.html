@@ -333,7 +333,9 @@
                 });
 
                 const rows = response.result.values;
+                console.log(rows);
                 const userRow = rows.find(row => row[0] === email && row[8] === password);
+                console.log(userRow);
 
                 if (userRow) {
                     displayUserData({
