@@ -329,7 +329,7 @@
             try {
                 const response = await gapi.client.sheets.spreadsheets.values.get({
                     spreadsheetId: SHEET_ID,
-                    range: 'Sheet1!A1:H5',
+                    range: 'Sheet1!A1:I5',
                 });
 
                 const rows = response.result.values;
