@@ -305,7 +305,7 @@
         console.log('Initializing gapi client...');
         try {
             await gapi.client.init({
-                key: API_KEY,
+                apiKey: API_KEY,
                 discoveryDocs: [DISCOVERY_DOC],
             });
             gapiInited = true;
