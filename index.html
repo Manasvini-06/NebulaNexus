@@ -285,111 +285,120 @@
     </div>
 
     <script>
-        // Replace these with your actual Google API credentials
-        const CLIENT_ID = '584964590423-1vm714m556oehis3vi75jg5utju8j3fm.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyC6_tSmVIvBfzHYuzMG66EMI1O9lYoxqV0';
-        const SHEET_ID = '19bouuHu8AOnzdidLUcdarfEV-qr-UMh8hjzuLXs4PMA';
-
-        // Discovery doc URL for APIs used by the quickstart
-        const DISCOVERY_DOC = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-
-        // Authorization scopes required by the API
-        const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
-
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-
-        document.addEventListener('DOMContentLoaded', initializeGoogleAPI);
-
-        function initializeGoogleAPI() {
-            gapi.load('client', initClient);
-        }
-
-        async function initClient() {
+    // Replace these with your actual Google API credentials
+    const CLIENT_ID = ‘584964590423-1vm714m556oehis3vi75jg5utju8j3fm.apps.googleusercontent.com’;
+    const API_KEY = ‘AIzaSyC6_tSmVIvBfzHYuzMG66EMI1O9lYoxqV0’;
+    const SHEET_ID = ‘19bouuHu8AOnzdidLUcdarfEV-qr-UMh8hjzuLXs4PMA’;
+    // Discovery doc URL for APIs used by the quickstart
+    const DISCOVERY_DOC = ‘https://sheets.googleapis.com/$discovery/rest?version=v4’;
+    // Authorization scopes required by the API
+    const SCOPES = ‘https://www.googleapis.com/auth/spreadsheets.readonly’;
+    let tokenClient;
+    let gapiInited = false;
+    let gisInited = false;
+    document.addEventListener(‘DOMContentLoaded’, initializeGoogleAPI);
+    function initializeGoogleAPI() {
+        console.log(‘Initializing Google API...’);
+        gapi.load(‘client’, initClient);
+    }
+    async function initClient() {
+        console.log(‘Initializing gapi client...’);
+        try {
             await gapi.client.init({
-                key: API_KEY,
+                apiKey: API_KEY,
                 discoveryDocs: [DISCOVERY_DOC],
             });
             gapiInited = true;
+            console.log(‘gapi client initialized successfully’);
             maybeEnableButtons();
+        } catch (error) {
+            console.error(‘Error initializing gapi client:’, error);
+            document.getElementById(‘errorMessage’).textContent = ‘Failed to initialize Google API. Please try again later.’;
         }
-
-        function maybeEnableButtons() {
-            if (gapiInited && gisInited) {
-                document.getElementById('loginForm').addEventListener('submit', handleLogin);
-            }
+    }
+    function maybeEnableButtons() {
+        if (gapiInited) {
+            console.log(‘Enabling login form...’);
+            document.getElementById(‘loginForm’).addEventListener(‘submit’, handleLogin);
+        } else {
+            console.log(‘API not fully initialized yet’);
         }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            try {
-                const response = await gapi.client.sheets.spreadsheets.values.get({
-                    spreadsheetId: SHEET_ID,
-                    range: 'Sheet1!A1:I5',
-                });
-
-                const rows = response.result.values;
-                console.log(rows);
-                const userRow = rows.find(row => row[0] === email && row[8] === password);
-                console.log(userRow);
-
-                if (userRow) {
-                    displayUserData({
-                        email: userRow[0],
-                        mobile: userRow[1],
-                        gamingHours: userRow[2],
-                        connectedDevices: userRow[3],
-                        activePlans: userRow[4],
-                        accumulatedPoints: userRow[5],
-                        expiryDate: userRow[6],
-                        addOn: userRow[7],
-                    });
-                    document.getElementById('loginView').style.display = 'none';
-                    document.getElementById('profileView').style.display = 'block';
-                } else {
-                    document.getElementById('errorMessage').textContent = 'Invalid email or password';
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
-            }
+    }
+    async function handleLogin(e) {
+        e.preventDefault();
+        console.log(‘Login attempt...’);
+        const email = document.getElementById(‘email’).value;
+        const password = document.getElementById(‘password’).value;
+        if (!email || !password) {
+            document.getElementById(‘errorMessage’).textContent = ‘Please enter both email and password’;
+            return;
         }
-
-        function displayUserData(userData) {
-            document.getElementById('gamingHours').textContent = `${userData.gamingHours} hours`;
-            document.getElementById('activePlans').textContent = userData.activePlans;
-            document.getElementById('connectedDevices').textContent = `${userData.connectedDevices} devices`;
-            document.getElementById('expiryDate').textContent = userData.expiryDate;
-            document.getElementById('accumulatedPoints').textContent = `${userData.accumulatedPoints} points`;
-        }
-
-        document.getElementById('logoutButton').addEventListener('click', function() {
-            document.getElementById('profileView').style.display = 'none';
-            document.getElementById('loginView').style.display = 'block';
-            document.getElementById('email').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('errorMessage').textContent = '';
-        });
-
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                if (this.dataset.tab === 'profile') {
-                    document.getElementById('profileContent').classList.add('active');
-                    document.getElementById('statsContent').classList.remove('active');
-                } else {
-                    document.getElementById('profileContent').classList.remove('active');
-                    document.getElementById('statsContent').classList.add('active');
-                }
+        try {
+            console.log(‘Fetching data from Google Sheets...’);
+            const response = await gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SHEET_ID,
+                range: ‘Sheet1!A1:I5’,
             });
+            const rows = response.result.values;
+            console.log(‘Fetched rows:‘, rows);
+            if (!rows || rows.length === 0) {
+                throw new Error(‘No data found in the spreadsheet’);
+            }
+            const userRow = rows.find(row => row[0] === email && row[8] === password);
+            console.log(‘Matching user row:’, userRow);
+            if (userRow) {
+                displayUserData({
+                    email: userRow[0],
+                    mobile: userRow[1],
+                    gamingHours: userRow[2],
+                    connectedDevices: userRow[3],
+                    activePlans: userRow[4],
+                    accumulatedPoints: userRow[5],
+                    expiryDate: userRow[6],
+                    addOn: userRow[7],
+                });
+                document.getElementById(‘loginView’).style.display = ‘none’;
+                document.getElementById(‘profileView’).style.display = ‘block’;
+            } else {
+                document.getElementById(‘errorMessage’).textContent = ‘Invalid email or password’;
+            }
+        } catch (error) {
+            console.error(‘Error during login:’, error);
+            document.getElementById(‘errorMessage’).textContent = `Login failed: ${error.message}`;
+        }
+    }
+    function displayUserData(userData) {
+        console.log(‘Displaying user data:’, userData);
+        document.getElementById(‘gamingHours’).textContent = `${userData.gamingHours} hours`;
+        document.getElementById(‘activePlans’).textContent = userData.activePlans;
+        document.getElementById(‘connectedDevices’).textContent = `${userData.connectedDevices} devices`;
+        document.getElementById(‘expiryDate’).textContent = userData.expiryDate;
+        document.getElementById(‘accumulatedPoints’).textContent = `${userData.accumulatedPoints} points`;
+    }
+    document.getElementById(‘logoutButton’).addEventListener(‘click’, function() {
+        console.log(‘Logging out...’);
+        document.getElementById(‘profileView’).style.display = ‘none’;
+        document.getElementById(‘loginView’).style.display = ‘block’;
+        document.getElementById(‘email’).value = ‘’;
+        document.getElementById(‘password’).value = ‘’;
+        document.getElementById(‘errorMessage’).textContent = ‘’;
+    });
+    document.querySelectorAll(‘.tab’).forEach(tab => {
+        tab.addEventListener(‘click’, function() {
+            console.log(‘Switching tab to:‘, this.dataset.tab);
+            document.querySelectorAll(‘.tab’).forEach(t => t.classList.remove(‘active’));
+            this.classList.add(‘active’);
+            if (this.dataset.tab === ‘profile’) {
+                document.getElementById(‘profileContent’).classList.add(‘active’);
+                document.getElementById(‘statsContent’).classList.remove(‘active’);
+            } else {
+                document.getElementById(‘profileContent’).classList.remove(‘active’);
+                document.getElementById(‘statsContent’).classList.add(‘active’);
+            }
         });
-
-        gapi.load('client', initClient);
-    </script>
+    });
+    console.log(‘Script loaded. Waiting for gapi to load...’);
+    gapi.load(‘client’, initClient);
+</script>
 </body>
 </html>
