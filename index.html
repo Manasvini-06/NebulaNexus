@@ -341,7 +341,7 @@ chat='true'>
             console.log('Fetching data from Google Sheets...');
             const response = await gapi.client.sheets.spreadsheets.values.get({
                 spreadsheetId: SHEET_ID,
-                range: 'Sheet1!A1:I5',
+                range: 'Sheet1!A1:I100',
             });
             const rows = response.result.values;
             console.log('Fetched rows:', rows);
